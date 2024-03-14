@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/juanhenaoparra/go-tting-started/app"
@@ -81,13 +82,20 @@ func setupRoutes(queue *models.MessageQueue, router *chi.Mux) {
 	router.Put("/send/bulk", func(w http.ResponseWriter, r *http.Request) {
 		sentMessages := make([]models.Message, 0)
 
+		wg := &sync.WaitGroup{}
+
 		for {
 			m, err := queue.Pop()
 			if err != nil {
 				break
 			}
 
+			fmt.Println("sending message: ", m.ID)
+			wg.Add(1)
+
 			go func() {
+				defer wg.Done()
+
 				err = m.Send()
 				if err != nil {
 					respond.Err(w, err)
@@ -97,6 +105,8 @@ func setupRoutes(queue *models.MessageQueue, router *chi.Mux) {
 				sentMessages = append(sentMessages, *m)
 			}()
 		}
+
+		wg.Wait()
 
 		if len(sentMessages) == 0 {
 			respond.Err(w, respond.NewRequestError(http.StatusNotFound, "no messages were sent"))
