@@ -87,13 +87,15 @@ func setupRoutes(queue *models.MessageQueue, router *chi.Mux) {
 				break
 			}
 
-			err = m.Send()
-			if err != nil {
-				respond.Err(w, err)
-				return
-			}
+			go func() {
+				err = m.Send()
+				if err != nil {
+					respond.Err(w, err)
+					return
+				}
 
-			sentMessages = append(sentMessages, *m)
+				sentMessages = append(sentMessages, *m)
+			}()
 		}
 
 		if len(sentMessages) == 0 {
