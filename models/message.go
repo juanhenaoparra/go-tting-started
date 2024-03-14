@@ -77,7 +77,12 @@ func (mq *MessageQueue) Pop() (*Message, error) {
 	}
 
 	m := mq.messages[0]
-	mq.messages = mq.messages[1:queueLength]
+	mq.messages = mq.messages[1:]
 
 	return &m, nil
+}
+
+// Send sends a message
+func (m *Message) Send() error {
+	return m.handler.Send(*m)
 }

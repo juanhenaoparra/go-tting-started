@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // SendPostJSON sends a POST request to the given URL with the given payload
@@ -39,6 +40,8 @@ func SendPostJSON(url string, payload map[string]any) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("reading response body: %w", err)
 	}
+
+	time.Sleep(1 * time.Second)
 
 	return string(resBody), nil
 }

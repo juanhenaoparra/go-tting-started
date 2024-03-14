@@ -39,7 +39,10 @@ func (a App) Start(port int) error {
 
 // NewApp creates a new App
 func NewApp() (*App, error) {
-	app := &App{}
+	app := &App{
+		ActiveQueue: models.NewMessageQueue(),
+	}
+
 	app.setupRouter()
 	return app, nil
 }
