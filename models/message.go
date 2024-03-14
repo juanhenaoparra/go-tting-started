@@ -18,7 +18,7 @@ var (
 
 // MessageQueue is a simple message queue
 type MessageQueue struct {
-	Messages []Message
+	messages []Message
 }
 
 // Message is a simple message
@@ -32,28 +32,28 @@ type Message struct {
 // NewMessageQueue creates a new message queue
 func NewMessageQueue() *MessageQueue {
 	return &MessageQueue{
-		Messages: make([]Message, 0, 100),
+		messages: make([]Message, 0, 100),
 	}
 }
 
 // Push adds a new message to the queue
-func (mq *MessageQueue) Push(payload map[string]any, receiverType NotificationProviderType, receiverDirection string) error {
+func (mq *MessageQueue) Push(payload map[string]any, receiverType NotificationProviderType, receiverDirection string) (*Message, error) {
 	if len(payload) == 0 {
-		return ErrEmptyPayload
+		return nil, ErrEmptyPayload
 	}
 
 	if receiverDirection == "" {
-		return ErrEmptyReceiverDirection
+		return nil, ErrEmptyReceiverDirection
 	}
 
 	isValid := ValidNotificationProviders[receiverType]
 	if !isValid {
-		return ErrUnknownNotificationProvider
+		return nil, ErrUnknownNotificationProvider
 	}
 
 	provider, err := NewNotificationProvider(receiverType, receiverDirection)
 	if err != nil {
-		return fmt.Errorf("creating '%s' notification provider: %w", receiverType, err)
+		return nil, fmt.Errorf("creating '%s' notification provider: %w", receiverType, err)
 	}
 
 	m := Message{
@@ -63,21 +63,21 @@ func (mq *MessageQueue) Push(payload map[string]any, receiverType NotificationPr
 		handler:      provider,
 	}
 
-	mq.Messages = append(mq.Messages, m)
+	mq.messages = append(mq.messages, m)
 
-	return nil
+	return &m, nil
 }
 
 // Pop removes the last message from the queue and returns it
 func (mq *MessageQueue) Pop() (*Message, error) {
-	queueLength := len(mq.Messages)
+	queueLength := len(mq.messages)
 
 	if queueLength == 0 {
 		return nil, ErrNoMessagesLeft
 	}
 
-	m := mq.Messages[queueLength-1]
-	mq.Messages = mq.Messages[0 : queueLength-1]
+	m := mq.messages[0]
+	mq.messages = mq.messages[1:queueLength]
 
 	return &m, nil
 }
